@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'dart:convert';
 
 class ReadDataScreen extends StatefulWidget {
   final BluetoothDevice device;
@@ -52,17 +51,11 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
     try {
       print("Reading characteristic: ${characteristic.uuid}");
       List<int> value = await characteristic.read();
-      String data;
-      
-      try {
-        data = utf8.decode(value);
-      } catch (e) {
-        data = value.map((e) => e.toRadixString(16).padLeft(2, '0')).join(' ');
-      }
+      String data = String.fromCharCodes(value);
       
       print("Characteristic value: $data");
       setState(() {
-        readData = 'Characteristic ${characteristic.uuid}: $data';
+        readData = data;
       });
     } catch (e) {
       print("Error reading characteristic: $e");
@@ -77,25 +70,18 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
       await characteristic.setNotifyValue(false);
       setState(() {
         isSubscribed = false;
-        readData += '\nUnsubscribed from characteristic: ${characteristic.uuid}';
       });
     } else {
       characteristic.value.listen((value) {
-        String data;
-        try {
-          data = utf8.decode(value);
-        } catch (e) {
-          data = value.map((e) => e.toRadixString(16).padLeft(2, '0')).join(' ');
-        }
+        String data = String.fromCharCodes(value);
         setState(() {
-          readData += '\nCharacteristic ${characteristic.uuid}: $data';
+          readData += data;
         });
       });
       await characteristic.setNotifyValue(true);
       setState(() {
         isSubscribed = true;
         subscribedCharacteristic = characteristic;
-        readData += '\nSubscribed to characteristic: ${characteristic.uuid}';
       });
     }
   }
