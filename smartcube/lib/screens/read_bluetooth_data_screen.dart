@@ -16,6 +16,8 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
   List<BluetoothCharacteristic> characteristics = [];
   bool isLoading = true;
   String readData = '';
+  bool isSubscribed = false;
+  BluetoothCharacteristic? subscribedCharacteristic;
 
   @override
   void initState() {
@@ -70,6 +72,34 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
     }
   }
 
+  void toggleSubscription(BluetoothCharacteristic characteristic) async {
+    if (isSubscribed) {
+      await characteristic.setNotifyValue(false);
+      setState(() {
+        isSubscribed = false;
+        readData += '\nUnsubscribed from characteristic: ${characteristic.uuid}';
+      });
+    } else {
+      characteristic.value.listen((value) {
+        String data;
+        try {
+          data = utf8.decode(value);
+        } catch (e) {
+          data = value.map((e) => e.toRadixString(16).padLeft(2, '0')).join(' ');
+        }
+        setState(() {
+          readData += '\nCharacteristic ${characteristic.uuid}: $data';
+        });
+      });
+      await characteristic.setNotifyValue(true);
+      setState(() {
+        isSubscribed = true;
+        subscribedCharacteristic = characteristic;
+        readData += '\nSubscribed to characteristic: ${characteristic.uuid}';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,11 +126,23 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
                         itemBuilder: (context, index) {
                           return ListTile(
                             title: Text('Characteristic UUID: ${characteristics[index].uuid}'),
-                            trailing: ElevatedButton(
-                              onPressed: () {
-                                readCharacteristic(characteristics[index]);
-                              },
-                              child: Text('Read Data'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    readCharacteristic(characteristics[index]);
+                                  },
+                                  child: Text('Read Data'),
+                                ),
+                                SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    toggleSubscription(characteristics[index]);
+                                  },
+                                  child: Text(isSubscribed && subscribedCharacteristic == characteristics[index] ? 'Unsubscribe' : 'Subscribe'),
+                                ),
+                              ],
                             ),
                           );
                         },
