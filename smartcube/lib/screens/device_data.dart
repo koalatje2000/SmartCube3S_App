@@ -29,7 +29,7 @@ class _DeviceDataScreenState extends State<DeviceDataScreen> {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() == characteristicUUID) {
           characteristic.setNotifyValue(true);
-          characteristic.value.listen((value) {
+          characteristic.lastValueStream.listen((value) {
             setState(() {
               collectedData += String.fromCharCodes(value);
             });
