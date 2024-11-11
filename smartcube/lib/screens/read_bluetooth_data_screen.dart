@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter/services.dart'; // Import Clipboard class
+import 'dart:convert';
 
 class ReadDataScreen extends StatefulWidget {
   final BluetoothDevice device;
@@ -86,6 +88,13 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
     }
   }
 
+  void copyToClipboard() {
+    Clipboard.setData(ClipboardData(text: readData));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Copied to clipboard!'),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,6 +149,10 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
               'Read Data:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
+          ),
+          ElevatedButton(
+            onPressed: copyToClipboard,
+            child: Text('Copy to Clipboard'),
           ),
           Expanded(
             child: SingleChildScrollView(
