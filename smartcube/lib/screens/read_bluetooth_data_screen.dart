@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'write_bluetooth_data_screen.dart';
 
 class ReadDataScreen extends StatefulWidget {
   final BluetoothDevice device;
@@ -18,6 +20,8 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
   String readData = '';
   bool isSubscribed = false;
   BluetoothCharacteristic? subscribedCharacteristic;
+  List<Map<String, String>> lights = [];
+  List<Map<String, dynamic>> rooms = [];
 
   @override
   void initState() {
@@ -27,12 +31,9 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
 
   void discoverServices() async {
     try {
-      print("Discovering services...");
       List<BluetoothService> services = await widget.device.discoverServices();
-      print("Services discovered: ${services.length}");
       for (BluetoothService service in services) {
         for (BluetoothCharacteristic characteristic in service.characteristics) {
-          print("Found characteristic: ${characteristic.uuid}");
           characteristics.add(characteristic);
         }
       }
@@ -41,7 +42,6 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
         isLoading = false;
       });
     } catch (e) {
-      print("Error discovering services: $e");
       setState(() {
         isLoading = false;
       });
@@ -50,19 +50,34 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
 
   void readCharacteristic(BluetoothCharacteristic characteristic) async {
     try {
-      print("Reading characteristic: ${characteristic.uuid}");
       List<int> value = await characteristic.read();
       String data = String.fromCharCodes(value);
-      
-      print("Characteristic value: $data");
       setState(() {
         readData = data;
+        parseJsonData(data);
       });
     } catch (e) {
-      print("Error reading characteristic: $e");
       setState(() {
         readData = 'Error: Unable to read characteristic';
       });
+    }
+  }
+
+  void parseJsonData(String data) {
+    try {
+      var jsonData = jsonDecode(data);
+      lights = (jsonData['Lights'] as List)
+          .map((light) => {'uuid': light['uuid'] as String, 'name': light['name'] as String})
+          .toList();
+      rooms = (jsonData['rooms'] as List)
+          .map((room) => {
+                'uuid': room['uuid'] as String,
+                'name': room['name'] as String,
+                'lights': room['lights'] as List<dynamic>
+              })
+          .toList();
+    } catch (e) {
+      print("Error parsing JSON data: $e");
     }
   }
 
@@ -77,6 +92,7 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
         String data = String.fromCharCodes(value);
         setState(() {
           readData += data;
+          parseJsonData(readData);
         });
       });
       await characteristic.setNotifyValue(true);
@@ -85,6 +101,18 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
         subscribedCharacteristic = characteristic;
       });
     }
+  }
+
+  void subscribeToLightsAndRooms() async {
+    for (BluetoothService service in services) {
+      for (BluetoothCharacteristic characteristic in service.characteristics) {
+        if (characteristic.uuid.toString() == "12345678-1234-5678-1234-56789abcdef3") {
+          toggleSubscription(characteristic);
+          return;
+        }
+      }
+    }
+    print("Characteristic not found.");
   }
 
   void copyToClipboard() {
@@ -150,8 +178,23 @@ class _ReadDataScreenState extends State<ReadDataScreen> {
             ),
           ),
           ElevatedButton(
+            onPressed: subscribeToLightsAndRooms,
+            child: Text('Read Lights and Rooms'),
+          ),
+          ElevatedButton(
             onPressed: copyToClipboard,
             child: Text('Copy to Clipboard'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WriteDataScreen(device: widget.device, lights: lights, rooms: rooms),
+                ),
+              );
+            },
+            child: Text('Go to Write Screen'),
           ),
           Expanded(
             child: SingleChildScrollView(

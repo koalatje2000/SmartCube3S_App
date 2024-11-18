@@ -37,7 +37,7 @@ class _DeviceDataScreenState extends State<DeviceDataScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => WriteDataScreen(device: widget.device)),
+                  MaterialPageRoute(builder: (context) => WriteDataScreen(device: widget.device, rooms: [], lights: [],)),
                 );
               },
               child: Text('Write Data'),
