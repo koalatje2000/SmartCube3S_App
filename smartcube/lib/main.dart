@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
-import 'screens/bluetooth_screen.dart'; // Import the BluetoothScreen
+import 'package:provider/provider.dart';
+import 'class/bluetooth_device_manager.dart';
+import 'screens/bluetooth_screen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => BluetoothDeviceManager(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,7 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: BluetoothScreen(), // Directly set the home to BluetoothScreen
+      home: BluetoothScreen(),
     );
   }
 }

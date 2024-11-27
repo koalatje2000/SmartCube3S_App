@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'device_data.dart';
+import 'package:provider/provider.dart';
+import 'bluetooth_loading_screen.dart';
+import 'package:smartcube/class/bluetooth_device_manager.dart';
 
 class BluetoothScreen extends StatefulWidget {
   @override
@@ -21,7 +23,6 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     if (isOn) {
       scanForDevices();
     } else {
-      // Bluetooth is not enabled
       print('Bluetooth is not enabled');
     }
   }
@@ -41,14 +42,13 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
   }
 
   void connectToDevice(BluetoothDevice device) async {
-    await device.connect();
+    final bluetoothDeviceManager = Provider.of<BluetoothDeviceManager>(context, listen: false);
+    bluetoothDeviceManager.setDevice(device);
+    await bluetoothDeviceManager.connectDevice();
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => DeviceDataScreen(device: device)),
-    ).then((_) {
-      // Handle what to do when returning back from DeviceDataScreen
-      device.disconnect();
-  });
+      MaterialPageRoute(builder: (context) => BluetoothLoadingScreen(device: device)),
+    );
   }
 
   @override
