@@ -25,6 +25,7 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
   List<String> selectedLights = [];
   String readData = '';
   StreamSubscription<List<int>>? subscription;
+  bool _jsonValid = false;
 
   @override
   void initState() {
@@ -133,11 +134,15 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
           characteristic.setNotifyValue(false);
           subscription?.cancel();
           receivedData.clear();
+          _jsonValid = true;
         }
       });
       print("Subscribing...");
       await characteristic.setNotifyValue(true);
       print("Subscribed...");
+      while (!_jsonValid){
+        await Future.delayed(Duration(seconds: 1));
+      }
     } catch (e) {
       print("Error reading lights and rooms: $e");
     }
@@ -145,6 +150,7 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
 
   bool isJsonComplete(String json) {
     try {
+      if (json.isEmpty) return false;
       jsonDecode(json);
       return true;
     } catch (e) {
