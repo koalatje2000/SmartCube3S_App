@@ -78,6 +78,12 @@ class _MainScreenState extends State<MainScreen> {
               _dataChanged = true;
             });
           },
+          onMiredValueChanged: (value) {
+            setState(() {
+              widget.lightsSideInfo[side.toString()]?["M"] = value.toInt();
+              _dataChanged = true;
+            });
+          },
           lightsSideInfo: widget.lightsSideInfo,
           selectedSide: side,
           onClose: () {

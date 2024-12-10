@@ -29,6 +29,7 @@ class _LightsRoomsSelectorState extends State<LightsRoomsSelector> {
     super.initState();
     selectedLights = List.from(widget.selectedLights);
     updateSelectedRooms();
+    sortLightsAndRoomsAlphabetically();
     generateSelectedLightsJson();
   }
 
@@ -53,6 +54,11 @@ class _LightsRoomsSelectorState extends State<LightsRoomsSelector> {
     selectedRooms = widget.rooms.where((room) {
       return room['lights'].every((light) => selectedLights.contains(light));
     }).map((room) => room['uuid'].toString()).toList();
+  }
+
+  void sortLightsAndRoomsAlphabetically() {
+    widget.lights.sort((a, b) => a['name']!.compareTo(b['name']!));
+    widget.rooms.sort((a, b) => a['name'].compareTo(b['name']));
   }
 
   void toggleRoomSelection(String roomId, List<dynamic> roomLights) {

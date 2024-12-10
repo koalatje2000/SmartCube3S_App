@@ -5,6 +5,7 @@ class HueColorPickerWidget extends StatefulWidget {
   final Color initialColor;
   final ValueChanged<Color> onColorChanged;
   final ValueChanged<double> onSliderChanged;
+  final ValueChanged<double> onMiredValueChanged;
   final Map<String, Map<String, dynamic>> lightsSideInfo;
   final int selectedSide;
   final Function() onClose;
@@ -13,6 +14,7 @@ class HueColorPickerWidget extends StatefulWidget {
     required this.initialColor,
     required this.onColorChanged,
     required this.onSliderChanged,
+    required this.onMiredValueChanged,
     required this.lightsSideInfo,
     required this.selectedSide,
     required this.onClose,
@@ -26,6 +28,7 @@ class _HueColorPickerWidgetState extends State<HueColorPickerWidget> {
   late Color _currentColor;
   late CircleColorPickerController _controller;
   late double _sliderValue;
+  late double _miredSliderValue;
 
   // Custom array of colors
   final List<Color> customColors = [
@@ -45,6 +48,9 @@ class _HueColorPickerWidgetState extends State<HueColorPickerWidget> {
     _currentColor = widget.initialColor;
     _controller = CircleColorPickerController(initialColor: _currentColor);
     _sliderValue = widget.lightsSideInfo[widget.selectedSide.toString()]?["B"]?.toDouble() ?? 50.0;
+    _miredSliderValue = widget.lightsSideInfo[widget.selectedSide.toString()]?["M"]?.toDouble() ?? 500.0;
+    if (_miredSliderValue < 153) _miredSliderValue = 153;
+    if (_miredSliderValue > 500) _miredSliderValue = 500;
   }
 
   @override
@@ -69,7 +75,10 @@ class _HueColorPickerWidgetState extends State<HueColorPickerWidget> {
                 strokeWidth: 8,
                 size: Size(175, 175),
                 onChanged: (color) {
-                  setState(() => _currentColor = color);
+                  setState(() {
+                    _currentColor = color;
+                    widget.lightsSideInfo[widget.selectedSide.toString()]?["M"] = 0;
+                  });
                   widget.onColorChanged(color);
                 },
               ),
@@ -121,6 +130,29 @@ class _HueColorPickerWidgetState extends State<HueColorPickerWidget> {
                 ),
               ),
               Icon(Icons.lightbulb),
+            ],
+          ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.thermostat, color: Color.fromARGB(255, 0, 0, 255),),
+              Expanded(
+                child: Slider(
+                  value: _miredSliderValue,
+                  min: 153,
+                  max: 500,
+                  divisions: 100,
+                  label: "${(1000000/_miredSliderValue).round()}K",
+                  onChanged: (value) {
+                    setState(() {
+                      _miredSliderValue = value;
+                      widget.onMiredValueChanged(value);
+                    });
+                  },
+                ),
+              ),
+              Icon(Icons.thermostat, color: Color.fromARGB(255, 255, 0, 0)),
             ],
           ),
         ],
