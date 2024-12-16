@@ -63,6 +63,8 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
               setState(() {
                 devicesList.clear();
               });
+              final bluetoothDeviceManager = Provider.of<BluetoothDeviceManager>(context, listen: false);
+              bluetoothDeviceManager.disconnectDevice();
               scanForDevices();
             },
           ),

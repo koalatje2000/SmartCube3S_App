@@ -45,16 +45,19 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
     super.dispose();
   }
 
-  Future<void> readGeneralInformationCharacteristic() async{
-    try{
-      if(!mounted) return;
+  Future<void> readGeneralInformationCharacteristic() async {
+    try {
+      if (!mounted) return;
       List<BluetoothService> services = await widget.device.discoverServices();
       for (BluetoothService service in services) {
-        for (BluetoothCharacteristic characteristic in service.characteristics) {
-          if (characteristic.uuid.toString() == "12345678-1234-5678-1234-56789abcdef1") {
+        for (BluetoothCharacteristic characteristic
+            in service.characteristics) {
+          if (characteristic.uuid.toString() ==
+              "12345678-1234-5678-1234-56789abcdef1") {
             generalInfoCharacteristic = characteristic;
             bool linkStatus = false;
-            while (!linkStatus){
+            while (!linkStatus) {
+              if (!mounted) return;
               print("Reading general information...");
               await readGeneralInformation(characteristic);
               linkStatus = await getLinkStatus();
@@ -69,76 +72,100 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
     }
   }
 
-Future<bool> getLinkStatus() async {
-  if(!mounted) return false;
-  print("Update screen, state: $bridge");
-  switch (bridge) {
-    case 0:
-      setState(() {
-        _statusMessage = 'Press link button on bridge';
-        _confirmButtonPresent = true;
-        _confirmButtonPressed = false;
-        _isLoading = false;
-      });
-      await Future.delayed(Duration(seconds: 1));
-      while (!_confirmButtonPressed){
+  Future<bool> getLinkStatus() async {
+    if (!mounted) return false;
+    print("Update screen, state: $bridge");
+    switch (bridge) {
+      case 0:
+        setState(() {
+          _statusMessage = 'Press link button on bridge';
+          _confirmButtonPresent = true;
+          _confirmButtonPressed = false;
+          _isLoading = false;
+        });
         await Future.delayed(Duration(seconds: 1));
-        print("Press confirm button...");
-       }
-       print("Confirm button pressed...");
-       await writeBridgeStatus(2);
-      return false;
-    case 1:
-    setState(() {
-      _statusMessage = 'Connection successful';
-      _confirmButtonPresent = false;
-      _confirmButtonPressed = false;
-      _isLoading = false;
-    });
-      await readDeviceData();
-      return true;
-    case 2:
-    setState(() {
-      _isLoading = true;
-      _confirmButtonPresent = false; 
-      _statusMessage = 'Linking to bridge...';
-    });
-      await Future.delayed(Duration(seconds: 3));
-      return false;
-    case 3:
-    setState(() {
-      _statusMessage = 'Link button not pressed, please retry';
-      _confirmButtonPresent = true;
-      _confirmButtonPressed = false;
-      _isLoading = false;
-    });
-      while (!_confirmButtonPressed){ }
-      return false;
-    default:
-      _statusMessage = 'Unknown status';
-      return false;
+        while (!_confirmButtonPressed) {
+          await Future.delayed(Duration(seconds: 1));
+          print("Press confirm button...");
+        }
+        print("Confirm button pressed...");
+        await writeBridgeStatus(2);
+        return false;
+      case 1:
+        setState(() {
+          _statusMessage = 'Connection successful';
+          _confirmButtonPresent = false;
+          _confirmButtonPressed = false;
+          _isLoading = false;
+        });
+        await readDeviceData();
+        return true;
+      case 2:
+        setState(() {
+          _isLoading = true;
+          _confirmButtonPresent = false;
+          _statusMessage = 'Linking to bridge...';
+        });
+        await Future.delayed(Duration(seconds: 3));
+        return false;
+      case 3:
+        setState(() {
+          _statusMessage = 'Link button not pressed, please retry';
+          _confirmButtonPresent = true;
+          _confirmButtonPressed = false;
+          _isLoading = false;
+        });
+        while (!_confirmButtonPressed) {
+          await Future.delayed(Duration(seconds: 1));
+          print("Press confirm button...");
+        }
+        print("Confirm button pressed...");
+        await writeBridgeStatus(2);
+        return false;
+      case 5:
+        setState(() {
+          _statusMessage =
+              'Bridge not found, please make sure the bridge is connected to your network and retry';
+          _confirmButtonPresent = true;
+          _confirmButtonPressed = false;
+          _isLoading = false;
+        });
+        while (!_confirmButtonPressed) {
+          await Future.delayed(Duration(seconds: 1));
+          print("Press confirm button...");
+        }
+        print("Confirm button pressed...");
+        await writeBridgeStatus(2);
+        return false;
+      default:
+        _statusMessage = 'Unknown status';
+        return false;
+    }
   }
-}
-
 
   Future<void> readDeviceData() async {
     try {
-      if(!mounted) return;
+      if (!mounted) return;
       print("Discovering services...");
       List<BluetoothService> services = await widget.device.discoverServices();
       print("Services discovered: ${services.length}");
       for (BluetoothService service in services) {
-        for (BluetoothCharacteristic characteristic in service.characteristics) {
-          if (characteristic.uuid.toString() == "12345678-1234-5678-1234-56789abcdef1") {
+        for (BluetoothCharacteristic characteristic
+            in service.characteristics) {
+          if (characteristic.uuid.toString() ==
+              "12345678-1234-5678-1234-56789abcdef1") {
             print("Reading general information...");
             await readGeneralInformation(characteristic);
-          } else if (characteristic.uuid.toString() == "12345678-1234-5678-1234-56789abcdef2") {
+          } else if (characteristic.uuid.toString() ==
+              "12345678-1234-5678-1234-56789abcdef2") {
             print("Reading light side information...");
             await readLightSideInfo(characteristic);
-          } else if (characteristic.uuid.toString() == "12345678-1234-5678-1234-56789abcdef3") {
+          } else if (characteristic.uuid.toString() ==
+              "12345678-1234-5678-1234-56789abcdef3") {
             print("Subscribing to lights and rooms...");
             await subscribeToLightsAndRooms(characteristic);
-          } else if (characteristic.uuid.toString() == "12345678-1234-5678-1234-56789abcdef4") {
+          } else if (characteristic.uuid.toString() ==
+              "12345678-1234-5678-1234-56789abcdef4") {
             print("Reading selected lights...");
             await readSelectedLights(characteristic);
           }
@@ -150,54 +177,56 @@ Future<bool> getLinkStatus() async {
     }
   }
 
-Future<void> writeBridgeStatus(int newStatus) async {
-  try {
-    if(!mounted) return;
-    if (generalInfoCharacteristic != null) {
-      List<int> value = await generalInfoCharacteristic!.read();
-      String data = String.fromCharCodes(value);
-      var jsonData = jsonDecode(data);
-
-      // Update only the Bridge status
-      jsonData['Bridge'] = newStatus;
-
-      await generalInfoCharacteristic!.write(utf8.encode(jsonEncode(jsonData)));
-      print("Bridge status updated to $newStatus");
-
-      setState(() {
-        bridge = newStatus;
-      });
-    }
-  } catch (e) {
-    print("Error writing bridge status: $e");
-  }
-}
-
-
-  void NavigateToMainScreen(){
-    print("Navigating to main screen...");
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MainScreen(
-            device: widget.device,
-            name: name,
-            type: type,
-            battery: battery,
-            charging: charging,
-            bridge: bridge,
-            lightsSideInfo: lightsSideInfo,
-            lights: lights,
-            rooms: rooms,
-            selectedLights: selectedLights,
-          )),
-        );
-      }
-  }
-
-  Future<void> readGeneralInformation(BluetoothCharacteristic characteristic) async {
+  Future<void> writeBridgeStatus(int newStatus) async {
     try {
-      if(!mounted) return;
+      if (!mounted) return;
+      if (generalInfoCharacteristic != null) {
+        List<int> value = await generalInfoCharacteristic!.read();
+        String data = String.fromCharCodes(value);
+        var jsonData = jsonDecode(data);
+
+        // Update only the Bridge status
+        jsonData['Bridge'] = newStatus;
+
+        await generalInfoCharacteristic!
+            .write(utf8.encode(jsonEncode(jsonData)));
+        print("Bridge status updated to $newStatus");
+
+        setState(() {
+          bridge = newStatus;
+        });
+      }
+    } catch (e) {
+      print("Error writing bridge status: $e");
+    }
+  }
+
+  void NavigateToMainScreen() {
+    print("Navigating to main screen...");
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => MainScreen(
+                  device: widget.device,
+                  name: name,
+                  type: type,
+                  battery: battery,
+                  charging: charging,
+                  bridge: bridge,
+                  lightsSideInfo: lightsSideInfo,
+                  lights: lights,
+                  rooms: rooms,
+                  selectedLights: selectedLights,
+                )),
+      );
+    }
+  }
+
+  Future<void> readGeneralInformation(
+      BluetoothCharacteristic characteristic) async {
+    try {
+      if (!mounted) return;
       List<int> value = await characteristic.read();
       String data = String.fromCharCodes(value);
       print("General Information Data: $data");
@@ -225,7 +254,8 @@ Future<void> writeBridgeStatus(int newStatus) async {
       var jsonData = jsonDecode(data);
       if (mounted) {
         setState(() {
-          lightsSideInfo = Map<String, Map<String, dynamic>>.from(jsonData['Lights'][0]);
+          lightsSideInfo =
+              Map<String, Map<String, dynamic>>.from(jsonData['Lights'][0]);
         });
       }
     } catch (e) {
@@ -233,7 +263,8 @@ Future<void> writeBridgeStatus(int newStatus) async {
     }
   }
 
-  Future<void> subscribeToLightsAndRooms(BluetoothCharacteristic characteristic) async {
+  Future<void> subscribeToLightsAndRooms(
+      BluetoothCharacteristic characteristic) async {
     try {
       StringBuffer receivedData = StringBuffer();
       subscription = characteristic.value.listen((value) {
@@ -252,7 +283,7 @@ Future<void> writeBridgeStatus(int newStatus) async {
       print("Subscribing...");
       await characteristic.setNotifyValue(true);
       print("Subscribed...");
-      while (!_jsonValid){
+      while (!_jsonValid) {
         print("Waiting for valid JSON....");
         await Future.delayed(Duration(seconds: 1));
       }
@@ -278,7 +309,10 @@ Future<void> writeBridgeStatus(int newStatus) async {
       if (mounted) {
         setState(() {
           lights = (jsonData['Lights'] as List)
-              .map((light) => {'uuid': light['uuid'] as String, 'name': light['name'] as String})
+              .map((light) => {
+                    'uuid': light['uuid'] as String,
+                    'name': light['name'] as String
+                  })
               .toList();
           rooms = (jsonData['rooms'] as List)
               .map((room) => {
@@ -294,7 +328,8 @@ Future<void> writeBridgeStatus(int newStatus) async {
     }
   }
 
-  Future<void> readSelectedLights(BluetoothCharacteristic characteristic) async {
+  Future<void> readSelectedLights(
+      BluetoothCharacteristic characteristic) async {
     try {
       List<int> value = await characteristic.read();
       String data = String.fromCharCodes(value);
@@ -311,29 +346,36 @@ Future<void> writeBridgeStatus(int newStatus) async {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text('Loading...'),
-    ),
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (_isLoading) CircularProgressIndicator(),
-          SizedBox(height: 20),
-          Text(_statusMessage),
-          if (_confirmButtonPresent) ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _confirmButtonPressed = true;
-              });
-            }, 
-            child: Text("Confirm"),
-          ),
-        ],
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            widget.device.disconnect();
+            Navigator.pop(context);
+            },
       ),
-    ),
-  );
-}
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_isLoading) CircularProgressIndicator(),
+            SizedBox(height: 20),
+            Text(_statusMessage),
+            if (_confirmButtonPresent)
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _confirmButtonPressed = true;
+                  });
+                },
+                child: Text("Confirm"),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -184,7 +184,14 @@ bool listEquals<T>(List<T> list1, List<T> list2) {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Main Screen'),
+        title: Text("Main Screen"),
+        leading: IconButton(
+          icon: Icon(Icons.close),
+          onPressed: () {
+            widget.device.disconnect();
+            Navigator.pop(context);
+            },
+      ),
       ),
       body: Center(
         child: GridView.builder(
