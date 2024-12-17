@@ -85,6 +85,7 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
         });
         await Future.delayed(Duration(seconds: 1));
         while (!_confirmButtonPressed) {
+          if (!mounted) return false;
           await Future.delayed(Duration(seconds: 1));
           print("Press confirm button...");
         }
@@ -116,10 +117,13 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
           _isLoading = false;
         });
         while (!_confirmButtonPressed) {
+          if (!mounted) return false;
           await Future.delayed(Duration(seconds: 1));
           print("Press confirm button...");
         }
         print("Confirm button pressed...");
+        await writeBridgeStatus(3);
+        await Future.delayed(Duration(seconds: 2));
         await writeBridgeStatus(2);
         return false;
       case 5:
@@ -131,6 +135,7 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
           _isLoading = false;
         });
         while (!_confirmButtonPressed) {
+          if (!mounted) return false;
           await Future.delayed(Duration(seconds: 1));
           print("Press confirm button...");
         }
@@ -284,6 +289,7 @@ class _BluetoothLoadingScreenState extends State<BluetoothLoadingScreen> {
       await characteristic.setNotifyValue(true);
       print("Subscribed...");
       while (!_jsonValid) {
+        if (!mounted) return;
         print("Waiting for valid JSON....");
         await Future.delayed(Duration(seconds: 1));
       }

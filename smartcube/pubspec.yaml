@@ -23,3 +23,4 @@ flutter:
   assets: 
     - assets/cube.stl
     - assets/cube.obj
+    - assets/SmartCube logo.png
